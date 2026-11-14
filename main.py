@@ -178,7 +178,7 @@ def run_stapp():
             cluster_pipeline = ClusteringPipeline(scaled_matrix, segmenter.rfm_df)
 
             if model_choice == "kmeans":
-                cluster_pipeline.fit_kmeans(**hyperparams)
+                cluster_pipeline.tuneKMeans(**hyperparams)
                 with st.expander("📈 View K-Means Diagnostics (Elbow & Silhouette)", expanded=False):
                     st.plotly_chart(cluster_pipeline.plotKMeansElbows(max_k=max_k), use_container_width=True)
             elif model_choice == "hierarchical":
