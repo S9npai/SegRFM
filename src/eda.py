@@ -3,6 +3,7 @@ import pathlib
 
 import pandas as pd
 import plotly.express as px
+from plotly.graph_objs.layout import yaxis
 
 from src.transform import Transform
 
@@ -95,7 +96,7 @@ class RetailEDA:
             self.df.groupby(["DayOfWeek", "Hour"])["InvoiceNo"]
             .nunique()
             .unstack(fill_value=0)
-            .reindex(list(calendar.day_name))
+            .reindex(list(calendar.day_name), fill_value=0)
         )
 
         contmap = px.imshow(
@@ -149,12 +150,12 @@ class RetailEDA:
         fig = px.histogram(
             positive_baskets,
             x='Quantity',
-            nbins=2000,
+            nbins=700,
             title='Basket Size Distribution',
             labels={'Quantity': 'Per Invoice Total Items', 'count': 'Invoice Count'}
         )
         fig.update_traces(marker_color='#e0892b')
-        fig.update_layout(bargap=0.1, template='plotly_white')
+        fig.update_layout(bargap=0.1, template='plotly_white', yaxis_type='log')
         fig.update_xaxes(range=[0, 2000])
 
         return fig
@@ -205,7 +206,7 @@ class RetailEDA:
             color_continuous_scale='Blues',
             hover_data=['Description'],
             title='Top Products Returned or Cancelled',
-            labels={'Absolute_Quantity': 'Total Units Returned', 'Product Label': 'Stock Code'}
+            labels={'Absolute_Quantity': 'Total Units Returned', 'StockCode': 'Stock Code'}
         )
 
         fig.update_layout(
@@ -223,29 +224,3 @@ class RetailEDA:
         return fig, stats
 
 
-
-
-if __name__ == "__main__":
-    df = pd.read_csv(pathlib.Path("../data/OnlineRetail.csv"))
-
-    transformer = Transform(df)
-    transformer.clean()
-    dxf = transformer.transform_all()
-
-    red = RetailEDA(dxf["df_reg"])
-
-    pareto = red.paretoRevenue()
-    pareto.show()
-
-    aov = red.average_order_values()
-    aov.show()
-
-    monRev = red.monthlyRevenue()
-    monRev.show()
-
-    bskv = red.basket_sizes()
-    bskv.show()
-
-    redc = RetailEDA(dxf["df_cl"])
-    cncl, stats = redc.cancellations()
-    cncl.show()

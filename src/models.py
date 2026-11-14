@@ -17,9 +17,12 @@ class ClusteringPipeline:
     def __init__(self, scaled_matrix: np.ndarray, rfm_df: pd.DataFrame):
         self.X = scaled_matrix
         self.rfm_df = rfm_df.copy()
+        self._eval_cache = {}
 
 
     def KMeansEval(self, max_k=10):
+        if max_k in self._eval_cache:
+            return self._eval_cache[max_k]
         wcss = []
         silhouette_scores = {}
 
@@ -30,7 +33,13 @@ class ClusteringPipeline:
             wcss.append(kmeans.inertia_)
             silhouette_scores[k] = silhouette_score(self.X, labels)
 
-        return {"wcss": wcss, "silhouette_scores": silhouette_scores, "k_range": list(K)}
+        results = {"wcss": wcss, "silhouette_scores": silhouette_scores, "k_range": list(K)}
+        self._eval_cache[max_k] = results
+        return results
+
+
+
+
 
 
     def plotKMeansElbows(self, max_k=10):
@@ -62,7 +71,12 @@ class ClusteringPipeline:
         return fig
 
 
-    def Dendrogram(self, linkage_method='ward', p=5):
+    def Dendrogram(self, linkage_method='ward', p=5, max_samples=1000):
+        X = self.X
+        if len(X) > max_samples:
+            rng = np.random.default_rng(42)
+            X = X[rng.choice(len(X), size=max_samples, replace=False)]
+
         dend = ff.create_dendrogram(
             self.X,
             orientation='top',
